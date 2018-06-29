@@ -14,7 +14,7 @@ tf.flags.DEFINE_string("data_dir", "Data_zoo/MIT_SceneParsing/", "path to datase
 tf.flags.DEFINE_float("learning_rate", "1e-4", "Learning rate for Adam Optimizer")
 tf.flags.DEFINE_string("model_dir", "Model_zoo/", "Path to vgg model mat")
 tf.flags.DEFINE_bool('debug', "True", "Debug mode: True/ False")
-tf.flags.DEFINE_string('mode', "train", "Mode train/ test/ visualize")
+tf.flags.DEFINE_string('mode', "visualize", "Mode train/ test/ visualize")
 tf.flags.DEFINE_float('pro_b', "0.85", "value of keep_probability")
 
 MODEL_URL = 'http://www.vlfeat.org/matconvnet/models/beta16/imagenet-vgg-verydeep-19.mat'
@@ -226,8 +226,7 @@ def main(argv=None):
                 train_dataset_reader = dataset.BatchDatset(train_records, image_options)
             validation_dataset_reader = dataset.BatchDatset(valid_records, image_options)
             # validation_dataset_reader = dataset.BatchDatset(train_records, image_options)
-        
-        
+
             print("Setting up Saver...")
             saver = tf.train.Saver()
             summary_writer = tf.summary.FileWriter(FLAGS.logs_dir, sess.graph)
@@ -236,6 +235,7 @@ def main(argv=None):
             ckpt = tf.train.get_checkpoint_state(FLAGS.logs_dir)
             if ckpt and ckpt.model_checkpoint_path:
                 saver.restore(sess, ckpt.model_checkpoint_path)
+
                 print("Model restored...")
         
             if FLAGS.mode == "train":
@@ -265,7 +265,9 @@ def main(argv=None):
                         saver.save(sess, FLAGS.logs_dir + "model.ckpt", itr)
         
             elif FLAGS.mode == "visualize":
-                valid_images, valid_annotations = validation_dataset_reader.get_random_batch(FLAGS.batch_size)
+                # valid_images, valid_annotations = validation_dataset_reader.get_random_batch(FLAGS.batch_size)
+                train_dataset_reader = dataset.BatchDatset(train_records, image_options)
+                valid_images, valid_annotations=train_dataset_reader.next_batch(FLAGS.batch_size)
                 pred = sess.run(pred_annotation, feed_dict={image: valid_images, annotation: valid_annotations,
                                                             keep_probability: 1.0})
                 valid_annotations = np.squeeze(valid_annotations, axis=3)
